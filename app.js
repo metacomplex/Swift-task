@@ -11,5 +11,5 @@ app.use("/api/users", userRouter);
 app.use("/api/parking", parkingRouter);
 
 app.listen(process.env.PORT, () => {
-    console.log("Server in runing on:", process.env.PORT);
+    console.log("Server in running on:", process.env.PORT);
 });
