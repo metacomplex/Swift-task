@@ -1,4 +1,4 @@
-const { createParkingSpot, getParkingSpots, updateParkingSpotById, deleteParkingSpotById } = require("./parking.service");
+const { createParkingSpot, getParkingSpots, updateParkingSpotById, deleteParkingSpotById, reserveParkingSpot, freeParkingSpotStatus } = require("./parking.service");
 
 module.exports = {
     createSpot: (req, res) => {
@@ -81,6 +81,60 @@ module.exports = {
                 });
             }
         });
-    }
+    },
+
+    reserveSpot: (req, res) => {
+        const spotId = req.params.id; // Assuming you pass the spot ID in the URL params
+        const userId = req.user.userId; // Assuming you have the user's ID in the JWT payload
+        const reservationDuration = req.params.duration;
+        console.log(reservationDuration)
+        reserveParkingSpot(spotId, userId, reservationDuration, (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({
+                    success: 0,
+                    message: "Error with database connection...",
+                });
+            }
+
+            if (result.message === "Parking spot reserved successfully") {
+                return res.status(200).json({
+                    success: 1,
+                    message: "Parking spot reserved successfully",
+                });
+            } else {
+                return res.status(400).json({
+                    success: 0,
+                    message: result.message,
+                });
+            }
+        });
+    },
+
+    freeSpot: (req, res) => {
+        const spotId = req.params.id;
+        
+        freeParkingSpotStatus(spotId, (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({
+                    success: 0,
+                    message: "Error with database connection...",
+                });
+            }
+
+            if (result.message === "Parking spot freed successfully") {
+                return res.status(200).json({
+                    success: 1,
+                    message: "Parking spot freed successfully",
+                });
+            } else {
+                return res.status(400).json({
+                    success: 0,
+                    message: result.message,
+                });
+            }
+        });
+    },
     
 }
