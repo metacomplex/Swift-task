@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS registration (
+  id INT NOT NULL AUTO_INCREMENT,
+  first_name VARCHAR(100) NOT NULL,
+  second_name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  mobile_number INT(9) NOT NULL,
+  password VARCHAR(300) NOT NULL,
+  balance INT(11) NOT NULL,
+  role TEXT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS parking (
+  id INT NOT NULL AUTO_INCREMENT,
+  zone_name VARCHAR(100) NOT NULL,
+  address VARCHAR(100) NOT NULL,
+  price_per_hour INT(100) NOT NULL,
+  taken TINYINT(1) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  user_id INT(11),
+  PRIMARY KEY (id),
+  FOREIGN KEY (user_id) REFERENCES registration(id)
+);
+
+CREATE TABLE IF NOT EXISTS cars (
+  make VARCHAR(100) NOT NULL,
+  model VARCHAR(100) NOT NULL,
+  year INT(10) NOT NULL,
+  type VARCHAR(20) NOT NULL,
+  plate_number VARCHAR(30) NOT NULL,
+  user_id INT(11),
+  car_id INT(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (car_id),
+  FOREIGN KEY (user_id) REFERENCES registration(id)
+);

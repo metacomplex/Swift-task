@@ -4,7 +4,6 @@ module.exports = {
     createParkingSpot: (data, callBack) => {
         const now = new Date();
       
-        // Check if the address already exists in the database
         pool.query(
           `SELECT COUNT(*) AS count FROM parking WHERE address = ?`,
           [data.address],
@@ -16,13 +15,11 @@ module.exports = {
             const addressCount = selectRes[0].count;
       
             if (addressCount > 0) {
-              // Address already exists, return an error message
               const addressError = new Error("Address is not unique.");
-              addressError.status = 400; // You can use an appropriate status code (e.g., 400 Bad Request)
+              addressError.status = 400;
               return callBack(addressError);
             }
       
-            // Address is unique, proceed with the insert
             pool.query(
               `INSERT INTO parking(zone_name, address, price_per_hour, taken, created_at, updated_at, user_id)
                VALUES(?, ?, ?, false, ?, ?, null)`,
@@ -91,5 +88,79 @@ module.exports = {
                 return callBack(null, res.affectedRows);
             }
         )
-    }
+    },
+
+    reserveParkingSpot: (spotId, userId, reservationDuration, callBack) => {
+      const now = new Date();
+
+      pool.query(
+          `SELECT * FROM parking WHERE id = ? AND taken = false`,
+          [spotId],
+          (err, spotResult) => {
+              if (err) {
+                  return callBack(err);
+              }
+
+              if (spotResult.length === 0) {
+                  return callBack(null, { message: "Parking spot is already taken" });
+              }
+
+              const pricePerHour = spotResult[0].price_per_hour;
+              const reservationCost = pricePerHour * reservationDuration;
+
+              pool.query(
+                  `SELECT balance FROM registration WHERE id = ?`,
+                  [userId],
+                  (err, userResult) => {
+                      if (err) {
+                          return callBack(err);
+                      }
+
+                      const userBalance = userResult[0].balance;
+
+                      if (userBalance < reservationCost) {
+                          return callBack(null, { message: "Insufficient balance" });
+                      }
+
+                      const updatedBalance = userBalance - reservationCost;
+                      console.log(reservationCost, userBalance)
+                      pool.query(
+                          `UPDATE registration SET balance = ? WHERE id = ?`,
+                          [updatedBalance, userId],
+                          (err) => {
+                              if (err) {
+                                  return callBack(err);
+                              }
+
+                              pool.query(
+                                  `UPDATE parking SET user_id = ?, taken = true WHERE id = ?`,
+                                  [userId, spotId],
+                                  (err) => {
+                                      if (err) {
+                                          return callBack(err);
+                                      }
+
+                                      return callBack(null, { message: "Parking spot reserved successfully" });
+                                  }
+                              );
+                          }
+                      );
+                  }
+              );
+          }
+      );
+    },
+
+    freeParkingSpotStatus: (spotId, callBack) => {
+      pool.query(
+        `UPDATE parking SET taken = ? WHERE id = ?`,
+        [false, spotId],
+        (err, res) => {
+          if (err) {
+            return callBack(err);
+          }
+          return callBack(null, { message: "Parking spot freed successfully" });
+        }
+      );
+    },
 }
